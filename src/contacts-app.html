@@ -1,0 +1,151 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="contact-card.html">
+
+<dom-module id="contacts-app">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        font-family: 'Roboto', 'Noto', sans-serif;
+
+        --contact-card-width: 100%;
+        --contact-card: {
+          display: flex;
+          width: var(--contact-card-width, 100%);
+          padding: .5rem;
+        }
+      }
+
+      .loading {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+        z-index: 9999
+      }
+
+      .loading span {
+        padding-left: 1rem;
+      }
+
+      header {
+        margin-left: .5rem;
+        margin-right: .5rem;
+      }
+
+      .app-container {
+        padding: 1rem .5rem;
+      }
+
+      .app-name {
+        font-size: 2rem;
+        margin: 0 0 .5rem 0;
+      }
+
+      .contact-list {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      @media (min-width: 468px) {
+        header {
+          display: flex;
+          justify-content: space-between;
+        }
+      }
+
+      @media (min-width: 600px) {
+        :host {
+          --contact-card-width: 50%;
+        }
+      }
+
+      @media (min-width: 768px) {
+        :host {
+          --contact-card-width: 33.33%;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        :host {
+          --contact-card-width: 25%;
+        }
+      }
+
+
+    </style>
+
+    <iron-ajax
+      auto
+      url="https://randomuser.me/api/?results={{contactsNumber}}"
+      handle-as="json"
+      last-response="{{data}}"
+      last-error={{error}}
+      loading="{{loading}}"
+      debounce="300"
+      ></iron-ajax>
+
+      <main class="app-container">
+        <template is="dom-if" if="{{loading}}">
+          <div class="loading">
+            <paper-spinner alt="Loading users..." active="true"></paper-spinner>
+            <span>Loading users...</span>
+          </div>
+        </template>
+
+        <template is="dom-if" if="{{error}}">
+          <div class="error">
+            <p>Sorry, an error happened while retrieving your contacts.</p>
+          </div>
+        </template>
+
+        <header>
+          <h1 class="app-name">Your contacts</h1>
+          <paper-input
+            type="number"
+            label="Contacts to show"
+            value="{{contactsNumber}}"></paper-input>
+        </header>
+        <div class="contact-list">
+          <template is="dom-repeat" items="{{data.results}}">
+            <contact-card contact="{{item}}"></contact-card>
+          </template>
+        </div>
+      </main>
+  </template>
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class ContactsApp extends Polymer.Element {
+      static get is() { return 'contacts-app'; }
+
+      static get properties() {
+        return {
+          contactsNumber: {
+            type: Number,
+            value: 10
+          }
+        };
+      }
+
+      handleError (error) {
+        console.error(error.message);
+      }
+    }
+
+    window.customElements.define(ContactsApp.is, ContactsApp);
+  </script>
+</dom-module>

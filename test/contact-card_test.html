@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>contact-agenda-app test</title>
+
+    <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../bower_components/web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../../src/contacts-app.html">
+  </head>
+  <body>
+
+    <test-fixture id="BasicTestFixture">
+      <template>
+        <contact-card></contact-card>
+      </template>
+    </test-fixture>
+
+    <script src="mocks/mockContact.js"></script>
+    <script>
+      function capitalize (string) {
+        return string.replace(/\b\w/g, c => c.toUpperCase());
+      }
+
+      suite('contact-card', function() {
+        let element;
+        let elementShadowRoot;
+        let paperCardElement;
+        let paperCardElementShadowRoot;
+        let paperCardElementSlotted;
+        let paperCardElementContentDiv;
+        let paperCardElementButtons;
+
+        test('should use paper-card element', () => {
+          element = fixture('BasicTestFixture');
+          elementShadowRoot = element.shadowRoot;
+          element.contact = mockContact;
+          paperCardElement = elementShadowRoot.querySelector('paper-card');
+
+          expect(paperCardElement).not.to.be.a.null;
+        });
+
+        test('should provide the contact full name to paper-card element', function() {
+          const paperCardElementHeading = paperCardElement.heading;
+          const contactFullName = capitalize(`${mockContact.name.first} ${mockContact.name.last}`);
+
+          expect(paperCardElementHeading).not.to.be.a.null;
+          expect(paperCardElementHeading).to.be.equal(contactFullName);
+        });
+
+        test('should provide the contact image to paper-card element', function() {
+          const paperCardElementImage = paperCardElement.image;
+
+          expect(paperCardElementImage).to.be.equal(mockContact.picture.large);
+        });
+
+        /* Following tests are tight coupled to paper-card element implementation details
+         * but I didn't find a way to test passed template from my own element
+         */
+
+        test('should provide the contact address to paper-card element', function() {
+          paperCardElementShadowRoot = paperCardElement.shadowRoot;
+          paperCardElementSlotted = paperCardElementShadowRoot
+            .querySelector('slot')
+            .assignedNodes();
+
+          paperCardElementContentDiv = paperCardElementSlotted
+            .reduce((result, slotted) => {
+              if (slotted.nodeType !== Node.TEXT_NODE && slotted.classList.contains('card-content')) {
+                result = slotted;
+              }
+              return result;
+            }, null);
+
+          const contactLocation = capitalize(`${mockContact.location.street} - ${mockContact.location.city}, ${mockContact.location.postcode} ${mockContact.location.state}`)
+          const providedContactAddress = paperCardElementContentDiv
+            .querySelector('[itemprop=address]')
+            .textContent
+            .trim();
+
+          expect(providedContactAddress).to.be.equal(contactLocation);
+        });
+
+        test('should provide the contact telephone to paper-card element', function() {
+          const providedContactPhone = paperCardElementContentDiv
+            .querySelector('[itemprop=telephone]')
+            .textContent
+            .trim();
+
+          expect(providedContactPhone).to.be.equal(mockContact.phone);
+        });
+
+        test('should provide the contact email to paper-card element', function() {
+          const providedContactEmail = paperCardElementContentDiv
+            .querySelector('[itemprop=email]')
+            .textContent
+            .trim();
+
+          expect(providedContactEmail).to.be.equal(mockContact.email);
+        });
+
+
+        test('should show a button to call the contact', function() {
+          const paperCardElementActionsDiv = paperCardElementSlotted
+            .reduce((result, slotted) => {
+              if (slotted.nodeType !== Node.TEXT_NODE && slotted.classList.contains('card-actions')) {
+                result = slotted;
+              }
+              return result;
+            }, null);
+
+          paperCardElementButtons = paperCardElementActionsDiv.querySelectorAll('.btn');
+
+          const callButton = paperCardElementButtons[0];
+
+          expect(callButton).not.to.be.a.null;
+          expect(callButton.textContent.trim()).to.be.equal('Call');
+        });
+
+        test('should show a button to send an email to the contact', function() {
+          const sendEmailButton = paperCardElementButtons[1];
+
+          expect(sendEmailButton).not.to.be.a.null;
+          expect(sendEmailButton.textContent.trim()).to.be.equal('Send email');
+        });
+      });
+    </script>
+  </body>
+</html>

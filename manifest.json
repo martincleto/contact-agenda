@@ -1,0 +1,7 @@
+{
+  "name": "contact-agenda",
+  "short_name": "contact-agenda",
+  "description": "Simple contact agenda using Polymer 2",
+  "start_url": "/",
+  "display": "standalone"
+}

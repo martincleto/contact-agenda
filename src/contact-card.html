@@ -1,0 +1,159 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="contact-card">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        width: 100%;
+
+        --paper-card: {
+          display: block;
+          width: 100%;
+        }
+
+        --paper-card-header: {
+          height: 144px;
+        }
+
+        --paper-card-header-color: #fff;
+
+        --paper-card-header-text: {
+          font-size: 1.2rem;
+          text-shadow: 1px 1px 2px rgba(60, 60, 60, 1);
+        }
+
+        --paper-card-header-image: {
+          position: absolute;
+          top: -50%;
+        }
+
+        @apply --contact-card;
+      }
+
+      li[itemprop] {
+        position: relative;
+        padding: 0 0 .5rem 2rem;
+      }
+
+      li[itemprop] iron-icon {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+
+      li[itemprop=email] {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
+      .btn {
+        display: inline-block;
+        color: #000;
+        text-transform: uppercase;
+        text-decoration: none;
+        line-height: 2rem;
+        padding: 0 .3rem;
+        margin: 0 1rem;
+      }
+
+      .btn:active,
+      .btn:hover {
+        font-weight: bold;
+      }
+
+      @media (min-width: 768px) {
+        :host {
+          --paper-card: {
+            font-size: .875rem; /* 14px */
+          }
+
+          --paper-card-header-text: {
+            font-size: 1rem;
+            text-shadow: 1px 1px 2px rgba(60, 60, 60, 1);
+          }
+        }
+
+        li[itemprop=email] {
+          width: 205px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        :host {
+          --paper-card-header: {
+            height: 100px;
+          }
+        }
+      }
+
+    </style>
+
+    <paper-card heading="[[fullName]]" image="[[contact.picture.large]]" alt="Image of [[fullName]]">
+      <div class="card-content">
+         <ul itemtype="http://schema.org/Person">
+           <li itemprop="address">
+             <iron-icon icon="communication:location-on"></iron-icon>
+             [[location]]
+           </li>
+           <li itemprop="telephone">
+             <iron-icon icon="communication:phone"></iron-icon>
+             [[contact.phone]]
+           </li>
+           <li itemprop="email">
+             <iron-icon icon="communication:email"></iron-icon>
+             [[contact.email]]
+           </li>
+         </ul>
+      </div>
+      <div class="card-actions">
+        <a href="tel:[[contact.phone]]" class="btn">Call</a>
+        <a href="mailto:[[contact.email]]" class="btn">Send email</a>
+      </div>
+    </paper-card>
+  </template>
+
+  <script>
+    function capitalize (string) {
+      return string.replace(/\b\w/g, c => c.toUpperCase());
+    }
+    /**
+     * @customElement
+     * @polymer
+     */
+    class ContactCard extends Polymer.Element {
+      static get is() { return 'contact-card'; }
+
+      static get properties() {
+        return {
+          contact: {
+            type: Object
+          },
+          fullName: {
+            type: String,
+            computed: '_composeFullName(contact.name)'
+          },
+          location: {
+            type: String,
+            computed: '_composeLocation(contact.location)'
+          }
+        };
+      }
+
+      _composeFullName (name) {
+        return capitalize(`${name.first} ${name.last}`);
+      }
+
+      _composeLocation (location) {
+        return capitalize(`${location.street} - ${location.city}, ${location.postcode} ${location.state}`);
+      }
+    }
+
+    window.customElements.define(ContactCard.is, ContactCard);
+  </script>
+</dom-module>
