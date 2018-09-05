@@ -1,6 +1,6 @@
 # contact-agenda
 
-Simple contact agenda using Polymer 2
+Simple contact agenda using [Polymer 2](https://www.polymer-project.org/2.0/start/) & [Firebase](https://firebase.google.com/)
 
 ## Install the Polymer-CLI
 
@@ -32,4 +32,4 @@ Chrome (or Chromium for Linux OS) must be previously installed and LAUNCHPAD_CHR
 $ polymer test
 ```
 
-You can also navigate to http://localhost:8081/test/follow-suggestions_test.html to run the tests.
+You can also navigate to http://localhost:8081/test/ to run the tests.
