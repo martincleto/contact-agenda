@@ -1,8 +1,10 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="user-login.html">
 <link rel="import" href="contact-card.html">
 
 <dom-module id="contacts-app">
@@ -83,20 +85,32 @@
         }
       }
 
-
     </style>
 
-    <iron-ajax
-      auto
-      url="https://randomuser.me/api/?results={{contactsNumber}}"
-      handle-as="json"
-      last-response="{{data}}"
-      last-error={{error}}
-      loading="{{loading}}"
-      debounce="300"
-      ></iron-ajax>
+    <firebase-app
+      auth-domain="contact-agenda-ac79f.firebaseapp.com"
+      database-url="https://contact-agenda-ac79f.firebaseio.com/"
+      api-key="AIzaSyBrwSTT7RbgYNB7qegOUrv7YbyYNf8cdAE">
+    </firebase-app>
+    <firebase-auth
+      id="auth"
+      user="{{user}}">
+    </firebase-auth>
 
-      <main class="app-container">
+    <main class="app-container">
+      <user-login id="userLogin"></user-login>
+
+      <template is="dom-if" if="{{user}}">
+        <iron-ajax
+          auto
+          url="https://randomuser.me/api/?results={{contactsNumber}}"
+          handle-as="json"
+          last-response="{{data}}"
+          last-error={{error}}
+          loading="{{loading}}"
+          debounce="300">
+        </iron-ajax>
+
         <template is="dom-if" if="{{loading}}">
           <div class="loading">
             <paper-spinner alt="Loading users..." active="true"></paper-spinner>
@@ -112,23 +126,26 @@
 
         <header>
           <h1 class="app-name">Your contacts</h1>
+          <div class="user">
+            <span class="user-name">[[user.displayName]]</span>
+            <paper-button raised on-tap="logout">Sign out</paper-button>
+          </div>
           <paper-input
             type="number"
             label="Contacts to show"
             value="{{contactsNumber}}"></paper-input>
         </header>
+
         <div class="contact-list">
           <template is="dom-repeat" items="{{data.results}}">
             <contact-card contact="{{item}}"></contact-card>
           </template>
         </div>
-      </main>
+      </template>
+    </main>
   </template>
+
   <script>
-    /**
-     * @customElement
-     * @polymer
-     */
     class ContactsApp extends Polymer.Element {
       static get is() { return 'contacts-app'; }
 
@@ -143,6 +160,10 @@
 
       handleError (error) {
         console.error(error.message);
+      }
+
+      logout () {
+        this.$.userLogin.logout();
       }
     }
 

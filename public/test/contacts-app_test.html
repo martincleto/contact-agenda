@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>contacts-app test</title>
+
+    <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../bower_components/web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../../src/contacts-app.html">
+  </head>
+  <body>
+
+    <test-fixture id="BasicTestFixture">
+      <template>
+        <contacts-app></contacts-app>
+      </template>
+    </test-fixture>
+
+    <script src="mocks/mockResponse.js"></script>
+    <script>
+
+      suite('contact-agenda-app', function() {
+        let server;
+        let element;
+        let elementShadowRoot;
+
+        function serverRespondWithSucess (server, numResults) {
+          const currentMockResponse = { results: [...mockResponse.results] };
+
+          if (numResults) {
+            currentMockResponse.results.length = numResults;
+          }
+
+          server.respondWith(
+            'GET',
+            /https:\/\/randomuser.me\/api\/\?results=\d+/,
+            [
+              200,
+              { 'Content-Type': 'application/json' },
+              JSON.stringify(currentMockResponse)
+            ]
+          );
+
+          server.respond();
+        }
+
+        function serverRespondWithError (server) {
+          server.respondWith(
+            'GET',
+            /https:\/\/randomuser.me\/api\/\?results=\d+/,
+            [
+              404,
+              { 'Content-Type': 'text/plain' },
+              'Not Found'
+            ]
+          );
+
+          server.respond();
+        }
+
+        setup(() => {
+          replace('firebase-app').with('fake-firebase-app');
+          replace('firebase-auth').with('fake-firebase-auth');
+        });
+
+        suite('when user is not logged', () => {
+          setup(() => {
+            element = fixture('BasicTestFixture');
+            elementShadowRoot = element.shadowRoot;
+          });
+
+          test('should not show anything', () => {
+            const header = elementShadowRoot.querySelector('header');
+            const contactList = elementShadowRoot.querySelector('.contact-list');
+
+            expect(header).to.be.a.null;
+            expect(contactList).to.be.a.null;
+          });
+        });
+
+        suite('when user is logged', () => {
+          setup(done => {
+            server = sinon.fakeServer.create();
+            element = fixture('BasicTestFixture');
+            element.user = {
+              displayName: 'Dr. Strange'
+            }
+            elementShadowRoot = element.shadowRoot;
+
+            flush(done)
+          });
+
+          teardown(() => {
+            server.restore();
+          });
+
+          test('should show a descriptive header', () => {
+            const header = elementShadowRoot.querySelector('h1');
+
+            expect(header).not.to.be.a.null;
+            expect(header.textContent).to.be.equal('Your contacts');
+          });
+
+          test('should show the user name', () => {
+            const actualDisplayedName = elementShadowRoot.querySelector('.user-name').textContent.trim();
+
+            expect(actualDisplayedName).to.be.equal(element.user.displayName);
+          });
+
+          test('should show a logout button', () => {
+            const button = elementShadowRoot.querySelector('.user paper-button');
+
+            expect(button).not.to.be.a.null;
+            expect(button.textContent).to.be.equal('Sign out');
+          });
+
+          test('should show an input field to set the number of contacts', () => {
+            const paperInputElement = elementShadowRoot.querySelector('paper-input');
+            const paperInputElementType = paperInputElement.getAttribute('type');
+
+            expect(paperInputElement).not.to.be.a.null;
+            expect(paperInputElementType).to.be.equal('number');
+          });
+
+          test('should use contact-card element to show contacts', done => {
+            serverRespondWithSucess(server);
+
+            flush(() => {
+              const contactCards = elementShadowRoot.querySelectorAll('contact-card');
+
+              expect(contactCards[0]).not.to.be.a.null;
+              done();
+            });
+          });
+
+          test('should show 10 contacts by default', done => {
+            const defaultContactsNumber = 10;
+
+            serverRespondWithSucess(server, defaultContactsNumber);
+
+            flush(() => {
+              const contactCards = elementShadowRoot.querySelectorAll('contact-card');
+
+              expect(contactCards.length).to.be.equal(defaultContactsNumber);
+              done();
+            });
+          });
+
+          test('should show as many contacts as set by user', done => {
+            const newContactsNumber = 27;
+
+            serverRespondWithSucess(server, newContactsNumber);
+
+            flush(() => {
+              const contactCards = elementShadowRoot.querySelectorAll('contact-card');
+              const paperInputElement = elementShadowRoot.querySelector('paper-input');
+
+              paperInputElement.value = newContactsNumber;
+
+              expect(contactCards.length).to.be.equal(newContactsNumber);
+              done();
+            });
+          });
+
+          test('should show an error message if error occurred', () => {
+            serverRespondWithError(server);
+
+            flush(() => {
+              const errorDiv = elementShadowRoot.querySelector('.error');
+
+              expect(errorDiv).not.to.be.a.null;
+            });
+          });
+        });
+      });
+
+    </script>
+  </body>
+</html>

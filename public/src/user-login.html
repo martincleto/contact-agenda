@@ -1,0 +1,44 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="user-login">
+  <template>
+    <firebase-auth
+      id="auth"
+      user="{{user}}"
+      provider="google"
+      status-known="{{statusKnown}}"
+      on-error="handleError">
+    </firebase-auth>
+
+    <paper-button raised on-tap="login" hidden$="[[user]]">Sign in</paper-button>
+  </template>
+
+  <script>
+    class UserLogin extends Polymer.Element {
+      static get is () { return 'user-login'; }
+
+      static get properties () {
+        return {
+          user: {
+            type: Object
+          },
+          statusKnown: {
+            type: Object
+          }
+        };
+      }
+
+      login () {
+        return this.$.auth.signInWithPopup();
+      }
+
+      logout () {
+        return this.$.auth.signOut();
+      }
+    }
+
+    window.customElements.define(UserLogin.is, UserLogin);
+  </script>
+</dom-module>
